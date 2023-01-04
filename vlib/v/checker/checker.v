@@ -98,6 +98,7 @@ mut:
 	comptime_for_field_var           string
 	comptime_fields_default_type     ast.Type
 	comptime_fields_type             map[string]ast.Type
+	comptime_for_field_value         ast.StructField // value of the field variable
 	fn_scope                         &ast.Scope = unsafe { nil }
 	main_fn_decl_node                ast.FnDecl
 	match_exhaustive_cutoff_limit    int = 10
@@ -2273,7 +2274,11 @@ pub fn (mut c Checker) expr(node_ ast.Expr) ast.Type {
 		ast.ArrayDecompose {
 			typ := c.expr(node.expr)
 			type_sym := c.table.sym(typ)
-			if type_sym.kind != .array {
+			if type_sym.kind == .array_fixed {
+				c.error('direct decomposition of fixed array is not allowed, convert the fixed array to normal array via ${node.expr}[..]',
+					node.expr.pos())
+				return ast.void_type
+			} else if type_sym.kind != .array {
 				c.error('decomposition can only be used on arrays', node.expr.pos())
 				return ast.void_type
 			}
