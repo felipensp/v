@@ -92,7 +92,7 @@ fn (mut p Parser) array_init(is_option bool, alias_array_type ast.Type) ast.Arra
 						}
 						p.check(.colon)
 						has_init = true
-						has_index = p.handle_index_variable(mut init_expr, elem_type)
+						has_index = p.handle_index_variable(mut init_expr)
 					}
 					last_pos = p.tok.pos()
 					p.check(.rcbr)
@@ -154,7 +154,7 @@ fn (mut p Parser) array_init(is_option bool, alias_array_type ast.Type) ast.Arra
 				}
 				'init' {
 					has_init = true
-					has_index = p.handle_index_variable(mut init_expr, elem_type)
+					has_index = p.handle_index_variable(mut init_expr)
 				}
 				else {
 					p.error_with_pos('wrong field `${key}`, expecting `len`, `cap`, or `init`',
@@ -192,6 +192,7 @@ fn (mut p Parser) array_init(is_option bool, alias_array_type ast.Type) ast.Arra
 		has_index:     has_index
 		cap_expr:      cap_expr
 		init_expr:     init_expr
+		index_type:    ast.int_type
 		is_option:     is_option
 	}
 }
@@ -269,7 +270,7 @@ fn (mut p Parser) scope_register_index() {
 	}
 }
 
-fn (mut p Parser) handle_index_variable(mut default_expr ast.Expr, elem_type ast.Type) bool {
+fn (mut p Parser) handle_index_variable(mut default_expr ast.Expr) bool {
 	mut has_index := false
 	p.open_scope()
 	defer {
@@ -281,9 +282,6 @@ fn (mut p Parser) handle_index_variable(mut default_expr ast.Expr, elem_type ast
 		mut variable := unsafe { var }
 		is_used := variable.is_used
 		variable.is_used = true
-		if elem_type.is_int() {
-			variable.typ = elem_type
-		}
 		has_index = is_used
 	}
 	if var := p.scope.find_var('it') { // FIXME: Remove this block when `it` is forbidden

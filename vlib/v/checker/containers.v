@@ -300,12 +300,24 @@ fn (mut c Checker) array_init(mut node ast.ArrayInit) ast.Type {
 fn (mut c Checker) check_array_init_default_expr(mut node ast.ArrayInit) {
 	mut init_expr := node.init_expr
 	c.expected_type = node.elem_type
-	init_typ := c.check_expr_option_or_result_call(init_expr, c.expr(mut init_expr))
+	mut init_typ := c.check_expr_option_or_result_call(init_expr, c.expr(mut init_expr))
+	if !node.elem_type.has_flag(.option) && node.elem_type.is_number()
+		&& node.elem_type != node.index_type {
+		// promote index variable type to compatible numeric type
+		node.index_type = node.elem_type
+	}
 	node.init_type = init_typ
 	if !node.elem_type.has_flag(.option) && init_typ.has_flag(.option) {
 		c.error('cannot use unwrapped Option as initializer', init_expr.pos())
 	}
-	c.check_expected(init_typ, node.elem_type) or { c.error(err.msg(), init_expr.pos()) }
+
+	c.check_expected(init_typ, node.elem_type) or {
+		if node.elem_type.is_number() {
+			// ignore incompatible numeric type, once index type has been promoted
+			return
+		}
+		c.error(err.msg(), init_expr.pos())
+	}
 }
 
 fn (mut c Checker) check_array_init_para_type(para string, mut expr ast.Expr, pos token.Pos) {

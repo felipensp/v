@@ -1564,6 +1564,7 @@ pub mut:
 	expr_types   []Type // [Dog, Cat] // also used for interface_types
 	elem_type    Type   // element type
 	init_type    Type   // init: value type
+	index_type   Type   // index variable type
 	typ          Type   // array type
 	alias_type   Type   // alias type
 	has_callexpr bool   // has expr which needs tmp var to initialize it
